@@ -25,7 +25,6 @@ class Particle{
     Particle(){
         pos = {static_cast<float>(GetRandomValue(1, window_width)),static_cast<float>(GetRandomValue(1, window_height))};
         velocity = {static_cast<float>(GetRandomValue(6.0, 14.0)),static_cast<float>(GetRandomValue(2.0, 8.0))};
-        //color = Color{static_cast<unsigned char>(GetRandomValue(0, 255)),static_cast<unsigned char>(GetRandomValue(0, 255)),static_cast<unsigned char>(GetRandomValue(0, 255)),255};
         color = ColorFromHSV(hue, 0.05, 0.75);
     }
     void Draw()const{
@@ -115,14 +114,14 @@ int main(){
         }
         
         if (isdragging) {
-            // Farenin X konumunu barın sınırlarına göre 0.0 ile 1.0 arasında oranla
+            
             float normalizedX = (mousePos.x - sliderBounds.x) / sliderBounds.width;
             
-            // Sınırların dışına çıkmasını engelle (clamp)
+            
             if (normalizedX < 0.0f) normalizedX = 0.0f;
             if (normalizedX > 1.0f) normalizedX = 1.0f;
 
-            // Değeri 0 ile 100 aralığına dönüştür
+           
             sliderValue = normalizedX * 100.0f;
         }
 
