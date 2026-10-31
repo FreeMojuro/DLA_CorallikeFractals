@@ -1,106 +1,68 @@
 #include <raylib.h>
-#include <vector>
-
-constexpr int window_width{1600};
+constexpr int window_width{1800};
 constexpr int window_height{1000};
-constexpr int max_v_size{2000};
+constexpr int max_v_size{5000};
 constexpr float threshold{15};
 constexpr float threshold_sqrd{threshold*threshold};
-float noise{15};
-
-class Particle;
-std::vector<Particle> particles;
+float noise{25};
 
 
-class Particle{
+struct ParticleStruct{
     public:
-    Vector2 pos;
-    Vector2 velocity;
-    float radius{5};
-    Color color;
-    bool isfrozen{false};
-    int hue{0};
-    Vector2 parent_pos;
+    float x[max_v_size];
+    float y[max_v_size];
+    float velocity_x[max_v_size];
+    float velocity_y[max_v_size];
+    bool isfrozen[max_v_size];
+    Color color[max_v_size];
+    float parent_x[max_v_size];
+    float parent_y[max_v_size];
+    float radius[max_v_size];
+    int hue[max_v_size];
 
-    Particle(){
-        pos = {static_cast<float>(GetRandomValue(1, window_width)),static_cast<float>(GetRandomValue(1, window_height))};
-        velocity = {static_cast<float>(GetRandomValue(6.0, 14.0)),static_cast<float>(GetRandomValue(2.0, 8.0))};
-        //color = Color{static_cast<unsigned char>(GetRandomValue(0, 255)),static_cast<unsigned char>(GetRandomValue(0, 255)),static_cast<unsigned char>(GetRandomValue(0, 255)),255};
-        color = ColorFromHSV(hue, 0.05, 0.75);
-    }
-    void Draw()const{
-        DrawCircle(pos.x, pos.y, radius, color);
-
-    }
-
-    void Update(){
-        if(!isfrozen){
-            pos.x += GetRandomValue(-noise, noise);
-            pos.y += GetRandomValue(-noise, noise) + 1;
-            pos.x = static_cast<float>(static_cast<int>(pos.x + window_width) % window_width);
-            if(pos.y > window_height){
-                pos.y = 1;
-                pos.x = GetRandomValue(1, window_width);
-            }
-            checkfreeze(particles);
-        }
-        
-
-    }
-    void checkfreeze(std::vector<Particle>& particles){
-        float dx,dy,distance;
-        for(int i{0}; i<max_v_size;++i){
-
-            if(particles[i].isfrozen){
-            dx = pos.x - particles[i].pos.x;
-            dy = pos.y - particles[i].pos.y;
-            distance = (dx*dx + dy*dy);
-            
-            if(distance < threshold_sqrd){
-
-                Particle parent = particles[i];
-                hue = (parent.hue+4)%360;
-                color = ColorFromHSV(static_cast<float>(hue), 1.0f, 1.0f);
-                isfrozen=true;
-
-                parent_pos = {parent.pos.x,parent.pos.y};
-                radius = parent.radius * 0.995;
-                if(radius<0)radius=0.1;
-
-                return;}}
-        }
-    }
 
 };
 
-
+ParticleStruct particles;
 
 void Reset(){
-    particles.clear();
-      for(int i{0}; i < max_v_size; ++i){
-        Particle p;
-        particles.push_back(p);
-        particles[i].parent_pos = {0,0};
+    for(int i{1}; i < max_v_size; i++){
+        particles.x[i] =GetRandomValue(0, window_width);
+        particles.y[i] =GetRandomValue(0, window_height);
+        particles.radius[i] = 5;
+        particles.velocity_x[i] =GetRandomValue(6, 14);
+        particles.velocity_y[i] =GetRandomValue(6, 14);
+        particles.isfrozen[i] = false;
+        particles.parent_x[i] = 0.0;
+        particles.parent_y[i] = 0.0;
+        particles.color[i] = GRAY;
+        particles.hue[i] = 0;
+
     }
 
-    particles[0].isfrozen=true;
-    particles[0].pos = {window_width/2,window_height-2};
-    particles[0].color = ColorFromHSV(static_cast<float>(particles[0].hue), 1.0f, 1.0f);
-    particles[0].radius = 6;
-
+    particles.x[0] = window_width/2;
+    particles.y[0] = window_height;
+    particles.isfrozen[0] = true;
+    particles.color[0] = RED;
+    particles.hue[0] = 1;
+    particles.radius[0] = 5; 
+    
 
 }
+
 
 int main(){
     InitWindow(window_width, window_height, "dla");
     SetTargetFPS(60);
-
-    Reset();
-
+    
     Rectangle sliderBounds{5,window_height-105,250,100};
     bool isdragging = false;
     float& sliderValue = noise;
 
+    Reset();
+
+
+    
     while(!WindowShouldClose()){
         BeginDrawing();
 
@@ -115,27 +77,58 @@ int main(){
         }
         
         if (isdragging) {
-            // Farenin X konumunu barın sınırlarına göre 0.0 ile 1.0 arasında oranla
+       
             float normalizedX = (mousePos.x - sliderBounds.x) / sliderBounds.width;
             
-            // Sınırların dışına çıkmasını engelle (clamp)
+           
             if (normalizedX < 0.0f) normalizedX = 0.0f;
             if (normalizedX > 1.0f) normalizedX = 1.0f;
 
-            // Değeri 0 ile 100 aralığına dönüştür
+            
             sliderValue = normalizedX * 100.0f;
         }
 
 
-        for(auto& particle : particles){
-            particle.Update();
+        for(int i{1}; i < max_v_size; i++){
+            if(!particles.isfrozen[i]){
+            particles.x[i] += GetRandomValue(-noise, noise);
+            particles.y[i] += GetRandomValue(-noise, noise) + 1;
+            particles.x[i] = static_cast<float>(static_cast<int>(particles.x[i] + window_width) % window_width);
+            if(particles.y[i] > window_height){
+                particles.y[i] = 1;
+                particles.x[i] = GetRandomValue(5, window_width-5);
+            }
         }
+        }
+
+        for(int i{0}; i < max_v_size; ++i){
+            if(!particles.isfrozen[i]){
+            for(int j{0}; j < max_v_size ; ++j ){
+                if(particles.isfrozen[j] && j != i){
+                    float dx = particles.x[i] - particles.x[j];
+                    float dy = particles.y[i] - particles.y[j];
+                    float distance_sqrd = dx * dx + dy * dy;
+                    if(distance_sqrd < threshold_sqrd){
+                        particles.parent_x[i] = particles.x[j];
+                        particles.parent_y[i] = particles.y[j];
+                        particles.isfrozen[i] = true;
+                        particles.hue[i] = (particles.hue[j] + 4) % 360;
+                        particles.color[i] = ColorFromHSV(particles.hue[i], 0.75, 1);
+                        particles.radius[i] = particles.radius[j] * 0.995;
+                        break;
+
+
+                    }
+                }
+            }
+        }}
 
         ClearBackground(BLACK);
 
-        for(const auto& particle : particles){
-            particle.Draw();
-            if(particle.parent_pos.x != 0 && particle.parent_pos.y != 0){DrawLineV(particle.parent_pos, particle.pos, particle.color);}
+        for(int i{0}; i < max_v_size; i++){
+            DrawCircle(particles.x[i], particles.y[i], particles.radius[i], particles.color[i]);
+            if(particles.parent_x[i] != 0 && particles.parent_y[i] != 0)
+                DrawLineV(Vector2{particles.parent_x[i],particles.parent_y[i]}, Vector2{particles.x[i],particles.y[i]}, particles.color[i]);
         }
 
         DrawRectangleRec(sliderBounds, LIGHTGRAY);
